@@ -60,62 +60,88 @@ void mkdir(char pathName[]){
 
 //handles tokenizing and absolute/relative pathing options
 
-struct NODE* splitPath(char* pathName, char* baseName, char* dirName){
-
-    int len = strlen(pathName);
-    struct NODE* currentDir;
-    
+struct NODE* splitPath(char* pathName, char* baseName, char* dirName) {
+    // "The function splitPath() with the following signature gets the complete path string to a file or directory as a relative or an absolute path" Checks for that by indexing first char.
+    struct NODE* currentNode;
     if (pathName[0] == '/') {
-        currentDir = root;
-    }
-    else {
-        currentDir = cwd;
-    }
-
-    if (strcmp(pathName, "/") == 0) { //handles case where path name is simply /
-            strcpy(dirName,"/");
-            strcpy(baseName,"");
-            return root;
-    }
-
-    char* lastSlash = strrchr(pathName, '/');
-    if (lastSlash) {
-        strncpy(dirName, pathName, lastSlash - pathName);
-        dirName[lastSlash - pathName] = '\0'; // Null terminate dirName
-        strcpy(baseName, lastSlash + 1); // Base name is after the last slash
+        currentNode = root;  
     } else {
-        strcpy(dirName, ""); // No directory name, base name is the full path
-        strcpy(baseName, pathName);
+        currentNode = cwd;   
     }
 
-    //what follows is to find ptr
+    // Handle special case for root "/" Lowk hacky lmaoooooo, because when you tokenize a single / with nothing, tokenizedPathName is null, and the while loop below doesn't hit work:
+    // and we end up with nothing in baseName and dirName.
+    if (strcmp(pathName, "/") == 0) {
+        strcpy(dirName, "/");
+        strcpy(baseName, "");
+        return root;
+    }
 
-    char dirToken[255];
-    strncpy(dirToken,dirName,sizeof(dirToken) - 1);
-    dirToken[sizeof(dirToken) - 1] = '\0';
+    // Make a copy of pathName for tokenization
+    char pathCopy[256];
+    strncpy(pathCopy, pathName, sizeof(pathCopy) - 1);
+    pathCopy[sizeof(pathCopy) - 1] = '\0';
 
-    char* token  = strtok(dirToken, "/");
-    while (token != NULL) {
-        int found = 0;
-        struct NODE* child = currentDir->childPtr;
+    char* tokenizedPathName = strtok(pathCopy, "/");
+    strcpy(dirName, "");
 
-        while (child != NULL) {
-            if ((strcmp(child->name, token) == 0) && (child->fileType == 'D')) {
-                found = 1;
-                currentDir = child;
-                break;
+    char* lastToken = NULL;
+    char tempPath[256] = "";
+
+    while (tokenizedPathName != NULL) {
+        if (lastToken != NULL) {
+            if (strlen(tempPath) > 0) {
+                strcat(tempPath, "/");
             }
-            child = child->siblingPtr;
+            strcat(tempPath, lastToken);
         }
-
-        if (!found) {
-            printf("ERROR: directory %s does not exist\n", token);
-            return NULL;
-        }
-
-        token = strtok(NULL, "/"); //NULL tells strtok to continue from where it left off previously
+        lastToken = tokenizedPathName;
+        tokenizedPathName = strtok(NULL, "/");
     }
-    
-    
-    return currentDir;
+
+    if (lastToken != NULL) {
+        strcpy(baseName, lastToken);
+    } else {
+        strcpy(baseName, "");
+    }
+
+    if (strlen(tempPath) > 0) {
+        if (pathName[0] == '/') {
+            strcpy(dirName, "/");
+            strcat(dirName, tempPath);
+        } else {
+            strcpy(dirName, tempPath);
+        }
+    } else if (pathName[0] == '/') {
+        strcpy(dirName, "/");
+    }
+
+    if (strlen(dirName) > 0 && strcmp(dirName, "/") != 0) {
+        char dirCopy[256];
+        strncpy(dirCopy, dirName, sizeof(dirCopy));
+        char* dirToken = strtok(dirCopy, "/");
+        
+        while (dirToken != NULL) {
+            struct NODE* child = currentNode->childPtr;
+            int found = 0;
+
+            while (child != NULL) {
+                if (strcmp(child->name, dirToken) == 0 && child->fileType == 'D') {
+                    currentNode = child;
+                    found = 1;
+                    break;
+                }
+                child = child->siblingPtr;
+            }
+
+            if (!found) {
+                printf("ERROR: directory %s does not exist\n", dirToken);
+                return NULL;
+            }
+
+            dirToken = strtok(NULL, "/");
+        }
+    }
+
+    return currentNode;
 }
