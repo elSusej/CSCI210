@@ -62,7 +62,7 @@ void mkdir(char pathName[]){
         current->siblingPtr = newDir;
     }
 
-    printf("MKDIR SUCCESS: node %s successfully created\n", pathName);
+    printf("MKDIR SUCCESS: node %s successfully created\n", newDir->name);
 }
 
 
