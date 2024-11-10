@@ -40,7 +40,7 @@ int main() {
 
     while (1) {
 
-    fprintf(stdout,"rsh> ");
+    fprintf(stdout,"rsh>");
 
     if (fgets(line,256,stdin)==NULL) continue;
 
