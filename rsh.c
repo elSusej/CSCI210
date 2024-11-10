@@ -31,12 +31,10 @@ int main() {
 
     char line[256];
     char linecpy[256];
-    char* argv[20];
+    char* argv[21];
     char* token;
 	pid_t pid;
     int status;
-    posix_spawnattr_t attr;
-	posix_spawnattr_init(&attr);
 
     while (1) {
 
@@ -87,7 +85,7 @@ int main() {
         continue;
     }
 
-    status = posix_spawnp(&pid, argv[0], NULL, &attr, argv, environ);
+    status = posix_spawnp(&pid, argv[0], NULL, NULL, argv, environ);
 
     if (status == 0) {
         if (waitpid(pid, &status, 0) == -1) {
@@ -95,7 +93,6 @@ int main() {
         }
     }
 
-    posix_spawnattr_destroy(&attr);
     }
     return 0;
 }
